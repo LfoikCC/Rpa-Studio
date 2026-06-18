@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+flows/*.json
+scripts/*.py
+user_scripts/*.py
+!flows/test.json
+!user_scripts/rpa_choice_final.py

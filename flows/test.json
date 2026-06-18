@@ -1,0 +1,32 @@
+[
+    {
+        "type": "Open App/File",
+        "path": "C:/Program Files/Microsoft Office/Office16/EXCEL.EXE"
+    },
+    {
+        "type": "Wait",
+        "seconds": 10.0
+    },
+    {
+        "type": "Loop (Excel)",
+        "excel_path": "D:/昊志机电/同行数据取数/conf/同行公司代码.xlsx",
+        "col_type": "列索引 (Index)",
+        "col_val": "0",
+        "var_name": "comp_code"
+    },
+    {
+        "type": "Type Text",
+        "text": "${comp_code}"
+    },
+    {
+        "type": "Wait",
+        "seconds": 1.0
+    },
+    {
+        "type": "Press Key",
+        "key": "enter"
+    },
+    {
+        "type": "End Block"
+    }
+]
