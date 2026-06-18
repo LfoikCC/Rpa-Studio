@@ -68,8 +68,8 @@ QPushButton#btnDanger:hover { background-color: #f78989; }
 QPushButton#btnDanger:pressed { background-color: #e6a23c; }
 QLineEdit, QComboBox { border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px 8px; background: white; font-size: 13px; min-height: 24px; }
 QLineEdit:focus, QComboBox:focus { border-color: #409eff; }
-QGroupBox { font-size: 14px; font-weight: bold; border: 1px solid #ebeef5; border-radius: 6px; margin-top: 20px; padding-top: 15px; background-color: #ffffff; }
-QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: -10px; color: #303133; background-color: transparent; padding: 0 5px; }
+QGroupBox { font-size: 14px; font-weight: bold; border: 1px solid #ebeef5; border-radius: 6px; margin-top: 12px; padding-top: 25px; background-color: #ffffff; }
+QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; padding: 0 5px; color: #303133; }
 """
 
 class RPAMainWindow(QMainWindow):
