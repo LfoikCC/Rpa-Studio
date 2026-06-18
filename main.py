@@ -54,7 +54,7 @@ QListWidget { border: 1px solid #dcdfe6; border-radius: 6px; background-color: #
 QListWidget::item { padding: 8px; border-bottom: 1px solid #ebeef5; border-radius: 4px; margin-bottom: 2px; }
 QListWidget::item:hover { background-color: #f5f7fa; }
 QListWidget::item:selected { background-color: #ecf5ff; color: #409eff; font-weight: bold; border: 1px solid #c6e2ff; }
-QPushButton { background-color: #ffffff; border: 1px solid #dcdfe6; border-radius: 4px; padding: 6px 12px; color: #606266; font-size: 13px; font-weight: 500; }
+QPushButton { background-color: #ffffff; border: 1px solid #dcdfe6; border-radius: 4px; padding: 6px 12px; color: #606266; font-size: 13px; font-weight: 500; min-height: 24px; }
 QPushButton:hover { color: #409eff; border-color: #c6e2ff; background-color: #ecf5ff; }
 QPushButton:pressed { color: #3a8ee6; border-color: #3a8ee6; }
 QPushButton#btnPrimary { background-color: #409eff; color: white; border: none; }
@@ -66,17 +66,17 @@ QPushButton#btnSuccess:pressed { background-color: #5daf34; }
 QPushButton#btnDanger { background-color: #f56c6c; color: white; border: none; }
 QPushButton#btnDanger:hover { background-color: #f78989; }
 QPushButton#btnDanger:pressed { background-color: #e6a23c; }
-QLineEdit, QComboBox { border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px 8px; background: white; font-size: 13px; min-height: 20px; }
+QLineEdit, QComboBox { border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px 8px; background: white; font-size: 13px; min-height: 24px; }
 QLineEdit:focus, QComboBox:focus { border-color: #409eff; }
-QGroupBox { font-size: 14px; font-weight: bold; border: 1px solid #ebeef5; border-radius: 6px; margin-top: 15px; padding-top: 15px; background-color: #ffffff; }
-QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 15px; top: -8px; color: #303133; background-color: #ffffff; padding: 0 5px; }
+QGroupBox { font-size: 14px; font-weight: bold; border: 1px solid #ebeef5; border-radius: 6px; margin-top: 20px; padding-top: 15px; background-color: #ffffff; }
+QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: -10px; color: #303133; background-color: transparent; padding: 0 5px; }
 """
 
 class RPAMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Choice RPA Studio - Advanced Edition")
-        self.setGeometry(100, 100, 1200, 800)
+        self.setGeometry(50, 50, 1300, 850)
         self.setStyleSheet(GLOBAL_QSS)
         self.current_flow_name = None
         self.actions = []
@@ -98,11 +98,13 @@ class RPAMainWindow(QMainWindow):
         # Column 1: Flow List
         # ====================
         left_widget = QWidget()
+        left_widget.setMinimumWidth(220)
         left_layout = QVBoxLayout(left_widget)
         left_layout.setContentsMargins(0, 0, 0, 0)
         
-        flow_group = QGroupBox("📁 流程管理 (Flows)")
+        flow_group = QGroupBox("📁 流程管理")
         flow_layout = QVBoxLayout(flow_group)
+        flow_layout.setSpacing(8)
         
         self.flow_list = QListWidget()
         self.flow_list.itemClicked.connect(self.on_flow_selected)
@@ -135,13 +137,16 @@ class RPAMainWindow(QMainWindow):
         # Column 2: Action Sequence
         # ====================
         center_widget = QWidget()
+        center_widget.setMinimumWidth(400)
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
         
-        editor_group = QGroupBox("📜 流程编排 (Sequence)")
+        editor_group = QGroupBox("📜 流程编排")
         editor_layout = QVBoxLayout(editor_group)
+        editor_layout.setSpacing(8)
         
         self.lbl_flow_name = QLabel("当前未选择流程")
+        self.lbl_flow_name.setWordWrap(True)
         self.lbl_flow_name.setStyleSheet("font-size: 15px; font-weight: bold; color: #409eff; padding: 5px;")
         editor_layout.addWidget(self.lbl_flow_name)
 
@@ -164,13 +169,14 @@ class RPAMainWindow(QMainWindow):
 
         add_action_layout = QHBoxLayout()
         self.action_type_combo = QComboBox()
+        self.action_type_combo.setMinimumWidth(180)
         self.action_type_combo.addItems([
             "Wait", "Click XY", "Type Text", "Press Key", 
             "OCR Click (Offset)", "OCR Click Lowest", "OCR Click Right", 
             "Image Click (CV2)", "Open App/File", "Kill Process", "Run Python",
             "Loop (Excel)", "If (OCR Text)", "End Block"
         ])
-        self.btn_add_action = QPushButton("➕ 插入(选中行下方)")
+        self.btn_add_action = QPushButton("➕ 插入至下方")
         self.btn_add_action.setObjectName("btnPrimary")
         self.btn_add_action.clicked.connect(self.add_action)
         add_action_layout.addWidget(self.action_type_combo, 1)
@@ -184,14 +190,16 @@ class RPAMainWindow(QMainWindow):
         # Column 3: Properties & Console
         # ====================
         right_widget = QWidget()
+        right_widget.setMinimumWidth(350)
         right_layout = QVBoxLayout(right_widget)
         right_layout.setContentsMargins(0, 0, 0, 0)
         
         right_v_splitter = QSplitter(Qt.Vertical)
 
         # Top: Properties
-        props_group = QGroupBox("⚙️ 动作属性 (Properties)")
+        props_group = QGroupBox("⚙️ 动作属性")
         props_layout = QVBoxLayout(props_group)
+        props_layout.setSpacing(8)
         self.config_panel = QStackedWidget()
         self.setup_config_panels()
         props_layout.addWidget(self.config_panel)
@@ -205,16 +213,17 @@ class RPAMainWindow(QMainWindow):
         right_v_splitter.addWidget(props_group)
 
         # Bottom: Console & Exec
-        exec_group = QGroupBox("🚀 执行台 (Console)")
+        exec_group = QGroupBox("🚀 执行终端")
         exec_layout = QVBoxLayout(exec_group)
+        exec_layout.setSpacing(8)
         
         exec_btns = QHBoxLayout()
-        self.btn_save = QPushButton("💾 保存流程")
+        self.btn_save = QPushButton("💾 保存")
         self.btn_save.clicked.connect(self.save_flow_with_msg)
-        self.btn_run = QPushButton("▶ 运行流程")
+        self.btn_run = QPushButton("▶ 运行")
         self.btn_run.setObjectName("btnSuccess")
         self.btn_run.clicked.connect(self.run_flow)
-        self.btn_stop = QPushButton("⏹ 强制停止")
+        self.btn_stop = QPushButton("⏹ 停止")
         self.btn_stop.setObjectName("btnDanger")
         self.btn_stop.clicked.connect(self.stop_flow)
         self.btn_stop.setEnabled(False)
@@ -233,16 +242,19 @@ class RPAMainWindow(QMainWindow):
         exec_layout.addWidget(btn_clear, alignment=Qt.AlignRight)
 
         right_v_splitter.addWidget(exec_group)
+        right_v_splitter.setSizes([350, 450])
         
         right_layout.addWidget(right_v_splitter)
         main_splitter.addWidget(right_widget)
 
-        # Set stretch factors for the 3 columns: 2 : 4 : 4
+        # Set stretch factors for the 3 columns: 2 : 5 : 4
         main_splitter.setStretchFactor(0, 2)
-        main_splitter.setStretchFactor(1, 4)
+        main_splitter.setStretchFactor(1, 5)
         main_splitter.setStretchFactor(2, 4)
+        main_splitter.setSizes([250, 500, 400])
         
         main_layout.addWidget(main_splitter)
+
 
     def setup_config_panels(self):
         # 0. Wait
