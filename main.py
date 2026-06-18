@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QListWidget, QPushButton, QLabel, 
                              QStackedWidget, QLineEdit, QComboBox, QFormLayout, 
                              QMessageBox, QInputDialog, QFileDialog, QCheckBox, 
-                             QTextEdit, QSplitter, QDialog)
+                             QTextEdit, QSplitter, QDialog, QGroupBox)
 from PyQt5.QtCore import Qt, QProcess, QTimer
 from PyQt5.QtGui import QPainter, QColor
 
@@ -48,11 +48,36 @@ USER_SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'use
 os.makedirs(FLOWS_DIR, exist_ok=True)
 os.makedirs(USER_SCRIPTS_DIR, exist_ok=True)
 
+GLOBAL_QSS = """
+QMainWindow { background-color: #f0f2f5; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+QListWidget { border: 1px solid #dcdfe6; border-radius: 6px; background-color: #ffffff; padding: 5px; font-size: 13px; outline: 0; }
+QListWidget::item { padding: 8px; border-bottom: 1px solid #ebeef5; border-radius: 4px; margin-bottom: 2px; }
+QListWidget::item:hover { background-color: #f5f7fa; }
+QListWidget::item:selected { background-color: #ecf5ff; color: #409eff; font-weight: bold; border: 1px solid #c6e2ff; }
+QPushButton { background-color: #ffffff; border: 1px solid #dcdfe6; border-radius: 4px; padding: 6px 12px; color: #606266; font-size: 13px; font-weight: 500; }
+QPushButton:hover { color: #409eff; border-color: #c6e2ff; background-color: #ecf5ff; }
+QPushButton:pressed { color: #3a8ee6; border-color: #3a8ee6; }
+QPushButton#btnPrimary { background-color: #409eff; color: white; border: none; }
+QPushButton#btnPrimary:hover { background-color: #66b1ff; }
+QPushButton#btnPrimary:pressed { background-color: #3a8ee6; }
+QPushButton#btnSuccess { background-color: #67c23a; color: white; border: none; }
+QPushButton#btnSuccess:hover { background-color: #85ce61; }
+QPushButton#btnSuccess:pressed { background-color: #5daf34; }
+QPushButton#btnDanger { background-color: #f56c6c; color: white; border: none; }
+QPushButton#btnDanger:hover { background-color: #f78989; }
+QPushButton#btnDanger:pressed { background-color: #e6a23c; }
+QLineEdit, QComboBox { border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px 8px; background: white; font-size: 13px; min-height: 20px; }
+QLineEdit:focus, QComboBox:focus { border-color: #409eff; }
+QGroupBox { font-size: 14px; font-weight: bold; border: 1px solid #ebeef5; border-radius: 6px; margin-top: 15px; padding-top: 15px; background-color: #ffffff; }
+QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 15px; top: -8px; color: #303133; background-color: #ffffff; padding: 0 5px; }
+"""
+
 class RPAMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Choice RPA Studio - Advanced Edition")
-        self.setGeometry(100, 100, 1050, 750)
+        self.setGeometry(100, 100, 1200, 800)
+        self.setStyleSheet(GLOBAL_QSS)
         self.current_flow_name = None
         self.actions = []
         self.process = None
@@ -64,67 +89,79 @@ class RPAMainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
 
-        # Left Panel: Flow List
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.addWidget(QLabel("RPA 流程列表"))
+        main_splitter = QSplitter(Qt.Horizontal)
+
+        # ====================
+        # Column 1: Flow List
+        # ====================
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        
+        flow_group = QGroupBox("📁 流程管理 (Flows)")
+        flow_layout = QVBoxLayout(flow_group)
         
         self.flow_list = QListWidget()
         self.flow_list.itemClicked.connect(self.on_flow_selected)
-        left_layout.addWidget(self.flow_list)
+        flow_layout.addWidget(self.flow_list)
 
         btn_layout = QHBoxLayout()
-        self.btn_new = QPushButton("新建流程")
+        self.btn_new = QPushButton("➕ 新建")
+        self.btn_new.setObjectName("btnPrimary")
         self.btn_new.clicked.connect(self.create_flow)
-        self.btn_delete = QPushButton("删除流程")
+        self.btn_delete = QPushButton("🗑️ 删除")
+        self.btn_delete.setObjectName("btnDanger")
         self.btn_delete.clicked.connect(self.delete_flow)
         btn_layout.addWidget(self.btn_new)
         btn_layout.addWidget(self.btn_delete)
-        left_layout.addLayout(btn_layout)
+        flow_layout.addLayout(btn_layout)
 
-        # Import Buttons
-        btn_layout_2 = QHBoxLayout()
+        import_layout = QHBoxLayout()
         self.btn_import_json = QPushButton("导入 JSON")
         self.btn_import_json.clicked.connect(self.import_json)
         self.btn_import_py = QPushButton("导入 Py脚本")
         self.btn_import_py.clicked.connect(self.import_py)
-        btn_layout_2.addWidget(self.btn_import_json)
-        btn_layout_2.addWidget(self.btn_import_py)
-        left_layout.addLayout(btn_layout_2)
-
-        main_layout.addWidget(left_panel, 2)
-
-        # Right Panel: Flow Editor + Console Splitter
-        right_splitter = QSplitter(Qt.Vertical)
+        import_layout.addWidget(self.btn_import_json)
+        import_layout.addWidget(self.btn_import_py)
+        flow_layout.addLayout(import_layout)
         
-        # --- Top Half: Flow Editor ---
-        editor_widget = QWidget()
-        self.right_layout = QVBoxLayout(editor_widget)
-        self.lbl_flow_name = QLabel("当前未选择流程")
-        self.lbl_flow_name.setStyleSheet("font-weight: bold; font-size: 14px;")
-        self.right_layout.addWidget(self.lbl_flow_name)
+        left_layout.addWidget(flow_group)
+        main_splitter.addWidget(left_widget)
 
-        # Action Editor List
+        # ====================
+        # Column 2: Action Sequence
+        # ====================
+        center_widget = QWidget()
+        center_layout = QVBoxLayout(center_widget)
+        center_layout.setContentsMargins(0, 0, 0, 0)
+        
+        editor_group = QGroupBox("📜 流程编排 (Sequence)")
+        editor_layout = QVBoxLayout(editor_group)
+        
+        self.lbl_flow_name = QLabel("当前未选择流程")
+        self.lbl_flow_name.setStyleSheet("font-size: 15px; font-weight: bold; color: #409eff; padding: 5px;")
+        editor_layout.addWidget(self.lbl_flow_name)
+
         self.action_list = QListWidget()
         self.action_list.itemClicked.connect(self.on_action_selected)
-        self.right_layout.addWidget(self.action_list)
-
-        # Step Management Buttons
+        editor_layout.addWidget(self.action_list)
+        
         step_manage_layout = QHBoxLayout()
         self.btn_up = QPushButton("↑ 上移")
         self.btn_down = QPushButton("↓ 下移")
-        self.btn_del_step = QPushButton("✕ 删除步骤")
+        self.btn_del_step = QPushButton("✕ 删除")
+        self.btn_del_step.setObjectName("btnDanger")
         self.btn_up.clicked.connect(self.move_step_up)
         self.btn_down.clicked.connect(self.move_step_down)
         self.btn_del_step.clicked.connect(self.delete_step)
         step_manage_layout.addWidget(self.btn_up)
         step_manage_layout.addWidget(self.btn_down)
         step_manage_layout.addWidget(self.btn_del_step)
-        step_manage_layout.addStretch()
-        self.right_layout.addLayout(step_manage_layout)
+        editor_layout.addLayout(step_manage_layout)
 
-        # Add / Insert Action Controls
         add_action_layout = QHBoxLayout()
         self.action_type_combo = QComboBox()
         self.action_type_combo.addItems([
@@ -133,62 +170,79 @@ class RPAMainWindow(QMainWindow):
             "Image Click (CV2)", "Open App/File", "Kill Process", "Run Python",
             "Loop (Excel)", "If (OCR Text)", "End Block"
         ])
-        self.btn_add_action = QPushButton("插入动作(至选中行下方)")
+        self.btn_add_action = QPushButton("➕ 插入(选中行下方)")
+        self.btn_add_action.setObjectName("btnPrimary")
         self.btn_add_action.clicked.connect(self.add_action)
-        self.btn_update_action = QPushButton("更新选中动作")
-        self.btn_update_action.clicked.connect(self.update_action)
-        
-        add_action_layout.addWidget(self.action_type_combo)
-        add_action_layout.addWidget(self.btn_add_action)
-        add_action_layout.addWidget(self.btn_update_action)
-        self.right_layout.addLayout(add_action_layout)
+        add_action_layout.addWidget(self.action_type_combo, 1)
+        add_action_layout.addWidget(self.btn_add_action, 1)
+        editor_layout.addLayout(add_action_layout)
 
-        # Action Configuration Panel (Dynamic)
+        center_layout.addWidget(editor_group)
+        main_splitter.addWidget(center_widget)
+
+        # ====================
+        # Column 3: Properties & Console
+        # ====================
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        
+        right_v_splitter = QSplitter(Qt.Vertical)
+
+        # Top: Properties
+        props_group = QGroupBox("⚙️ 动作属性 (Properties)")
+        props_layout = QVBoxLayout(props_group)
         self.config_panel = QStackedWidget()
         self.setup_config_panels()
-        self.right_layout.addWidget(self.config_panel)
-
-        self.action_type_combo.currentIndexChanged.connect(self.config_panel.setCurrentIndex)
-
-        # Save & Run
-        bottom_layout = QHBoxLayout()
-        self.btn_save = QPushButton("保存流程")
-        self.btn_save.clicked.connect(self.save_flow_with_msg)
-        self.btn_run = QPushButton("运行流程")
-        self.btn_run.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
-        self.btn_run.clicked.connect(self.run_flow)
+        props_layout.addWidget(self.config_panel)
         
-        self.btn_stop = QPushButton("强制停止")
-        self.btn_stop.setStyleSheet("background-color: #f44336; color: white;")
+        self.btn_update_action = QPushButton("💾 保存修改至当前动作")
+        self.btn_update_action.setObjectName("btnPrimary")
+        self.btn_update_action.clicked.connect(self.update_action)
+        props_layout.addWidget(self.btn_update_action)
+        
+        self.action_type_combo.currentIndexChanged.connect(self.config_panel.setCurrentIndex)
+        right_v_splitter.addWidget(props_group)
+
+        # Bottom: Console & Exec
+        exec_group = QGroupBox("🚀 执行台 (Console)")
+        exec_layout = QVBoxLayout(exec_group)
+        
+        exec_btns = QHBoxLayout()
+        self.btn_save = QPushButton("💾 保存流程")
+        self.btn_save.clicked.connect(self.save_flow_with_msg)
+        self.btn_run = QPushButton("▶ 运行流程")
+        self.btn_run.setObjectName("btnSuccess")
+        self.btn_run.clicked.connect(self.run_flow)
+        self.btn_stop = QPushButton("⏹ 强制停止")
+        self.btn_stop.setObjectName("btnDanger")
         self.btn_stop.clicked.connect(self.stop_flow)
         self.btn_stop.setEnabled(False)
-        
-        bottom_layout.addWidget(self.btn_save)
-        bottom_layout.addWidget(self.btn_run)
-        bottom_layout.addWidget(self.btn_stop)
-        self.right_layout.addLayout(bottom_layout)
-        
-        right_splitter.addWidget(editor_widget)
+        exec_btns.addWidget(self.btn_save)
+        exec_btns.addWidget(self.btn_run)
+        exec_btns.addWidget(self.btn_stop)
+        exec_layout.addLayout(exec_btns)
 
-        # --- Bottom Half: Console Terminal ---
-        console_widget = QWidget()
-        console_layout = QVBoxLayout(console_widget)
-        console_layout.setContentsMargins(0, 10, 0, 0)
-        console_layout.addWidget(QLabel("运行反馈终端 (Console):"))
         self.console_output = QTextEdit()
         self.console_output.setReadOnly(True)
-        self.console_output.setStyleSheet("background-color: #1e1e1e; color: #00ff00; font-family: Consolas, monospace;")
-        console_layout.addWidget(self.console_output)
+        self.console_output.setStyleSheet("background-color: #1e1e1e; color: #a6e22e; font-family: Consolas, monospace; padding: 8px; border-radius: 4px; font-size: 13px;")
+        exec_layout.addWidget(self.console_output)
         
         btn_clear = QPushButton("清空终端")
         btn_clear.clicked.connect(self.console_output.clear)
-        console_layout.addWidget(btn_clear, alignment=Qt.AlignRight)
+        exec_layout.addWidget(btn_clear, alignment=Qt.AlignRight)
+
+        right_v_splitter.addWidget(exec_group)
         
-        right_splitter.addWidget(console_widget)
+        right_layout.addWidget(right_v_splitter)
+        main_splitter.addWidget(right_widget)
+
+        # Set stretch factors for the 3 columns: 2 : 4 : 4
+        main_splitter.setStretchFactor(0, 2)
+        main_splitter.setStretchFactor(1, 4)
+        main_splitter.setStretchFactor(2, 4)
         
-        # Set splitter sizes (approx 60% editor, 40% console)
-        right_splitter.setSizes([450, 300])
-        main_layout.addWidget(right_splitter, 5)
+        main_layout.addWidget(main_splitter)
 
     def setup_config_panels(self):
         # 0. Wait
@@ -487,6 +541,14 @@ class RPAMainWindow(QMainWindow):
     def render_action_list(self):
         self.action_list.clear()
         depth = 0
+        
+        icon_map = {
+            'Wait': '⏳', 'Click XY': '🖱️', 'Type Text': '⌨️', 'Press Key': '🖲️',
+            'OCR Click (Offset)': '👁️', 'OCR Click Lowest': '⬇️', 'OCR Click Right': '➡️',
+            'Image Click (CV2)': '🖼️', 'Open App/File': '🚀', 'Kill Process': '💀', 
+            'Run Python': '🐍', 'Loop (Excel)': '🔄', 'If (OCR Text)': '❓', 'End Block': '🔚'
+        }
+
         for action in self.actions:
             action_type = action.get('type')
             
@@ -496,6 +558,7 @@ class RPAMainWindow(QMainWindow):
             
             indent = "    " * depth
             prefix = "└── " if depth > 0 else ""
+            icon = icon_map.get(action_type, '▪')
             
             params_str = ""
             
@@ -529,7 +592,7 @@ class RPAMainWindow(QMainWindow):
             elif action_type == 'End Block':
                 params_str = "---"
                 
-            display_text = f"{indent}{prefix}[{action_type}]  {params_str}"
+            display_text = f"{indent}{prefix}{icon} [{action_type}]  {params_str}"
             self.action_list.addItem(display_text)
             
             # Start Block increases indent for the NEXT actions
