@@ -55,14 +55,14 @@ def open_choice():
     print("正在自动输入账号密码...")
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.press('delete')
-    pyautogui.typewrite("shhxgq0001", interval=0.05)
+    pyautogui.typewrite("。。。", interval=0.05)
     time.sleep(0.5)
     
     pyautogui.press('tab')
     time.sleep(0.5)
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.press('delete')
-    pyautogui.typewrite("qg543534", interval=0.05)
+    pyautogui.typewrite("。。。", interval=0.05)
     time.sleep(0.5)
     
     print("提交登录...")
